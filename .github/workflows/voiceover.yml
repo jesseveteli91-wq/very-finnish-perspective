@@ -1,0 +1,57 @@
+name: ElevenLabs narration
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: Script path under scripts/episodes/
+        required: true
+        type: string
+  push:
+    branches: [main]
+    paths: ['scripts/episodes/*.txt']
+permissions:
+  contents: read
+concurrency:
+  group: narration-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install audio utilities
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Generate narration
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          INPUT_SCRIPT: ${{ inputs.script }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python - <<'PY'
+          import os, subprocess
+          from pathlib import PurePosixPath
+          if os.environ["EVENT_NAME"] == "workflow_dispatch":
+              paths = [os.environ["INPUT_SCRIPT"]]
+          else:
+              paths = subprocess.check_output(["git", "diff", "--name-only", "--diff-filter=AM", "HEAD^", "HEAD"], text=True).splitlines()
+              paths = [p for p in paths if PurePosixPath(p).parent == PurePosixPath("scripts/episodes") and p.endswith(".txt")]
+          if not paths:
+              raise SystemExit("No narration scripts selected")
+          for path in paths:
+              subprocess.run(["python", "scripts/generate_audio.py", path], check=True)
+          PY
+      - name: Save audio and alignment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finnish-voiceover-${{ github.run_id }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 30
