@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: narration-${{ github.ref }}
+  group: narration-${{ github.run_id }}
   cancel-in-progress: false
 jobs:
   narration:
