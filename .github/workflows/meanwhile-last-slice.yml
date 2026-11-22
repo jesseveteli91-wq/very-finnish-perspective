@@ -1,0 +1,27 @@
+name: Meanwhile last slice narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-last-slice.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the last slice
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-last-slice.txt <<'END'
+          One slice. Eight people. Pekka has a knife. Half for me. Half for whoever wants it. Apparently, she also wants half. Now he needs a ruler. That olive just changed owners. They have started cutting the plate. Even the crumb has a seat. Anyone want to split this?
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-last-slice.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-last-slice-narration
+          path: output/meanwhile-last-slice
