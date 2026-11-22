@@ -1,0 +1,27 @@
+name: Meanwhile pilot narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-dinner-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the dinner pilot
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-dinner.txt <<'END'
+          Dinner is at six. I'm early. Two seconds. They let the ice in early. There were twelve. Wrong house. He's coming too. You can stop walking now. You waited for me? You have the pizza app. What time would you ring the bell?
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-dinner.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-dinner-narration
+          path: output/meanwhile-dinner
