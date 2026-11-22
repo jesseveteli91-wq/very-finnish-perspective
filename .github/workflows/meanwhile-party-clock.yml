@@ -1,0 +1,27 @@
+name: Meanwhile party clock narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-party-clock.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the party clock
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-party-clock.txt <<'END'
+          Pekka brought a stopwatch to a party. Six. Of course. Noor rings with her bike helmet still on. Liv has her shoes off before he can write three. Ben brings ice. The pen runs. Lena brings flowers. And a dry pen. Camille gives the host fifteen minutes. Pekka gives her a column. Rafa brings a speaker. The clipboard starts vibrating. Luz signs beside her time. Now everybody wants to sign. Sofía turns the page. What time are we leaving? Pekka turns it back. That's a different clipboard.
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-party-clock.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-party-clock-narration
+          path: output/meanwhile-party-clock
