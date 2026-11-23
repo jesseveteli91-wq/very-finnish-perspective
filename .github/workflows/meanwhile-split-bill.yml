@@ -1,0 +1,27 @@
+name: Meanwhile split bill narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-split-bill.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the split bill
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-split-bill.txt <<'END'
+          Nine people. One slip. Eight zero one nine. Pekka puts in the decimal point himself. Liv opens Swish. Kojo needs a number. Rosa turns the slip over for a code. Blank. Omar pockets it. My invitation, my treat. Linh gets the coffees next time. Moana gathers the coins for one family pot. Jules asks for separate cheques. Felix separates the coins. Pekka counts them twice. Eight euros and ninety-one cents each. The waiter brings the machine. That's the Wi-Fi password.
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-split-bill.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-split-bill-narration
+          path: output/meanwhile-split-bill
