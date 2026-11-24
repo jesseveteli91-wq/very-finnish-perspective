@@ -1,0 +1,27 @@
+name: Meanwhile tea bag narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-tea-bag.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the tea bag
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-tea-bag.txt <<'END'
+          Pekka's shopping list says tea. Quantity, one. He brought a measuring jug. Ece pours one little glass. Awa slips in mint. Alice leaves room for milk, then fills the room. Amina grates ginger over the top. Mei drops in pearls. Pekka moves the line. Nok adds ice. Now the line is underwater. Amir pulls the tea between two jugs. Pekka tries to measure the stream. Jia catches it in a takeaway bag and ties the string. Pekka checks his list. One tea bag.
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-tea-bag.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-tea-bag-narration
+          path: output/meanwhile-tea-bag
