@@ -1,0 +1,27 @@
+name: Meanwhile group photo narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-group-photo.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the group photo
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-group-photo.txt <<'END'
+          There's a potato wedged under Pekka's camera. Inés said potato, so he brought one. It's keeping the tripod level. Lin says eggplant. Pekka rolls one over. Mila stops it with a cabbage. Lars adds an orange, which rolls straight past the cabbage. Hana wedges it with cheese. Kadi sets down pea soup. Nobody moves the tripod now. Diego says whisky. Pekka finds a tiny glass. Rui points at the little bird. It lands on the shutter. Pekka checks the group photo. Everybody's out of focus. The potato looks fantastic.
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-group-photo.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-group-photo-narration
+          path: output/meanwhile-group-photo
