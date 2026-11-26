@@ -1,0 +1,27 @@
+name: Meanwhile hello ticket narration
+on:
+  push:
+    paths:
+      - '.github/workflows/meanwhile-hello-ticket.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  narration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get -qq update && sudo apt-get -qq install -y ffmpeg
+      - name: Narrate the hello ticket
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          cat > scripts/episodes/meanwhile-hello-ticket.txt <<'END'
+          Pekka put a ticket machine in his own hallway. Wouldn't want to miss a hello. Kabelo takes one and shakes his hand. Mali puts her palms together. Pekka tucks two under her elbow. Bea lifts Uncle Pekka's hand to her forehead. Three sticks to his cuff. Léa gives him three cheek kisses. Still one ticket. Tawanda claps and five slips out. Sami catches it, hand to heart, and passes five back. Ana leans in for one kiss and tears off seven. Mere waves with eight. Bula, Pekka! Number nine? He checks his pocket. Nice to meet me.
+          END
+          python scripts/generate_audio.py scripts/episodes/meanwhile-hello-ticket.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: meanwhile-hello-ticket-narration
+          path: output/meanwhile-hello-ticket
